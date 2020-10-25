@@ -91,7 +91,6 @@ def log_latency(ip):
 
 def log_bandwidth(url):
     try:
-        #bandwidth = measure_bandwidth_bytes_per_sec(url)
         download = speedtest.Speedtest().download()
         upload = speedtest.Speedtest().upload()
     except RuntimeError:
@@ -131,10 +130,6 @@ def main():
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-    #logging.info("using sierra bonita IP list")
-    #ips = ["10.0.0.1", "138.229.248.1", "8.8.8.8"]
-    #logging.info("using felter rd IP list")
-    #ips = ["192.168.1.1", "v1451.core3.fmt2.he.net", "8.8.8.8"]
     logging.info("using basic IP list")
 
     monitor_forever()

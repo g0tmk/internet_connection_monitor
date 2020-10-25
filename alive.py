@@ -37,4 +37,3 @@ if __name__ == "__main__":
 
     print('check a down IP')
     print("  alive('10.234.123.123') = ", alive('10.234.123.123'))
-

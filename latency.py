@@ -27,7 +27,6 @@ def measure_latency_with_count(ip_count_tuple):
     # first line is always status/title only
     lines = lines[1:]
 
-    #print(lines)
     values = []
     for line in lines:
         # should match both unix/win ping: optional space before ms
@@ -64,9 +63,6 @@ def measure_latency_list(ip_list, repeat_count=10):
 
 
 if __name__ == "__main__":
-
-    #latency_in_ms = measure_latency("8.8.8.8")
-    #print("measure_latency('8.8.8.8') = {:.2f} ms".format(latency_in_ms))
 
     print("two parallel pings to 10.0.0.1 and 8.8.8.8:")
     print("measure_latency_list(['10.0.0.1','8.8.8.8']) = {}".format(measure_latency_list(['10.0.0.1','8.8.8.8'])))
