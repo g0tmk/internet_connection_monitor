@@ -9,9 +9,9 @@ _MAX_THREADS = 5
 
 
 def measure_latency_with_count(ip_count_tuple):
-    ip, count = ip_count_tuple
+    ip, repeat_count = ip_count_tuple
     try:
-        output = ping(ip, count=count)
+        output = ping(ip, count=repeat_count)
     except NoConnectionException:
         return None
 
@@ -40,8 +40,8 @@ def measure_latency_with_count(ip_count_tuple):
         else:
             pass
 
-    if len(values) != count:
-        raise RuntimeError("bad response from ping: wrong number of matches ({})".format(repr(matches)))
+    if len(values) != repeat_count:
+        raise RuntimeError("bad response from ping: wrong number of matches ({})".format(len(values)))
 
     total = 0.0
     for val in values:
@@ -49,13 +49,13 @@ def measure_latency_with_count(ip_count_tuple):
         if val == "<1":
             val = 0.5
         total += float(val)
-    return total / count
+    return total / repeat_count
 
 
-def measure_latency_list(ip_list, count=10):
+def measure_latency_list(ip_list, repeat_count=10):
     """Check latencies using threads. Returns a list of (address, ping in ms) tuples."""
 
-    ip_count_list = [(ip, count) for ip in ip_list]
+    ip_count_list = [(ip, repeat_count) for ip in ip_list]
 
     with Pool(_MAX_THREADS) as p:
         raw_results = p.map_async(measure_latency_with_count, ip_count_list).get(999)
@@ -75,4 +75,4 @@ if __name__ == "__main__":
     print("measure_latency_list(['8.8.8.8']*{}) = {}".format(_MAX_THREADS, measure_latency_list(['8.8.8.8']*_MAX_THREADS)))
     print()
     print("{} parallel ping operations (max thread count) to 8.8.8.8, one sample each:".format(_MAX_THREADS))
-    print("measure_latency_list(['8.8.8.8']*{}, count=1) = {}".format(_MAX_THREADS, measure_latency_list(['8.8.8.8']*_MAX_THREADS, count=1)))
+    print("measure_latency_list(['8.8.8.8']*{}, count=1) = {}".format(_MAX_THREADS, measure_latency_list(['8.8.8.8']*_MAX_THREADS, repeat_count=1)))
