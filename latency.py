@@ -10,22 +10,11 @@ _MAX_THREADS = 5
 
 def measure_latency_with_count(ip_count_tuple):
     ip, repeat_count = ip_count_tuple
-    try:
-        output = ping(ip, count=repeat_count)
-    except NoConnectionException:
-        return None
 
-    # for windows: remove \r
-    output = output.replace("\r", "")
+    lines = ping(ip, count=repeat_count).splitlines()
 
-    lines = re.split('\n', output)
-    lines = list(filter(None, lines))
-
-    if len(lines) < 2:
+    if len(lines) < 3:
         raise RuntimeError("bad response from ping: not enough lines")
-
-    # first line is always status/title only
-    lines = lines[1:]
 
     values = []
     for line in lines:
@@ -35,19 +24,14 @@ def measure_latency_with_count(ip_count_tuple):
         #   "time=10.0ms"   windows
         match = re.search("time=?([<\d.]+) ?ms", line)
         if match:
-            values.append(match.group(1))
-        else:
-            pass
+            # Windows shows all values lower than 1ms as "<1ms"
+            value = 0.5 if match.group(1) == "<1" else match.group(1)
+            values.append(value)
 
     if len(values) != repeat_count:
         raise RuntimeError("bad response from ping: wrong number of matches ({})".format(len(values)))
 
-    total = 0.0
-    for val in values:
-        # Windows shows all values lower than 1ms as "<1ms"
-        if val == "<1":
-            val = 0.5
-        total += float(val)
+    total = sum(float(n) for n in values)
     return total / repeat_count
 
 

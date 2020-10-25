@@ -41,4 +41,3 @@ if __name__ == "__main__":
     except NoConnectionException:
         print("Got NoConnectionException.")
     print("=" * 50)
-
