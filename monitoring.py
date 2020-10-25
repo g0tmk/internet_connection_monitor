@@ -86,7 +86,7 @@ def log_latency(ip):
         logging.info("LATENCY    : <error>")
     else:
         logging.info("LATENCY    : {:.2f} ms to {}".format(latency, ip))
-        output_latency(latency)
+        output_latency("{:.2f}".format(latency))
 
 
 def log_bandwidth(url):
@@ -97,9 +97,9 @@ def log_bandwidth(url):
     except RuntimeError:
         logging.info("BANDWIDTH  : <error>")
     else:
-        logging.info("BANDWIDTH  : {:.2f} mbits down {:.2f} mbits up".format(download / 1000000, upload / 1000000))
-        output_download_bandwidth("{:.2f}".format(download / 1000000))
-        output_upload_bandwidth("{:.2f}".format(upload / 1000000))
+        logging.info("BANDWIDTH  : {:.3f} mbits down {:.3f} mbits up".format(download / 1000000, upload / 1000000))
+        output_download_bandwidth("{:.3f}".format(download / 1000000))
+        output_upload_bandwidth("{:.3f}".format(upload / 1000000))
 
 
 def run_events(event_list):
@@ -131,14 +131,9 @@ def main():
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-    #logging.info("using sierra bonita IP list")
-    #ips = ["10.0.0.1", "138.229.248.1", "8.8.8.8"]
-    #logging.info("using felter rd IP list")
-    #ips = ["192.168.1.1", "v1451.core3.fmt2.he.net", "8.8.8.8"]
-    logging.info("using basic IP list")
-
     monitor_forever()
 
 
 if __name__ == "__main__":
     main()
+
