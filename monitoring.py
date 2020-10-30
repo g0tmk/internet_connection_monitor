@@ -4,7 +4,7 @@ import datetime
 import sys
 import math
 from latency import measure_latency_with_count
-
+from my_exceptions import NoConnectionException
 import speedtest
 
 _BANDWIDTH_URL = "http://ipv4.download.thinkbroadband.com/2MB.zip"
@@ -18,25 +18,13 @@ if (sys.version_info < (3, 6)):
     sys.exit(1)
 
 
-def save_to_csv(date=None, time=None, latency="", down_bandwidth="", up_bandwidth=""):
+def save_to_csv(date=None, time=None, latency="", down_bandwidth="", up_bandwidth="", state_is_up=""):
     if date is None:
         date = datetime.datetime.now().strftime("%Y-%m-%d")
     if time is None:
         time = datetime.datetime.now().strftime("%H:%M:%S")
     with open(_OUTPUT_CSV, "a") as handle:
-        print(f"{date},{time},{latency},{down_bandwidth},{up_bandwidth}", file=handle)
-
-
-def output_latency(latency):
-    save_to_csv(latency=latency)
-
-
-def output_download_bandwidth(down_bandwidth):
-    save_to_csv(down_bandwidth=down_bandwidth)
-
-
-def output_upload_bandwidth(up_bandwidth):
-    save_to_csv(up_bandwidth=up_bandwidth)
+        print(f"{date},{time},{latency},{down_bandwidth},{up_bandwidth},{state_is_up}", file=handle)
 
 
 class PeriodicEvent():
@@ -82,23 +70,24 @@ class PeriodicEvent():
 def log_latency(ip):
     try:
         latency = measure_latency_with_count((ip, _LATENCY_SAMPLE_COUNT))
-    except RuntimeError:
-        logging.info("LATENCY    : <error>")
+    except NoConnectionException:
+        logging.info("LATENCY    : no connection")
+        save_to_csv(state_is_up=False)
     else:
         logging.info("LATENCY    : {:.2f} ms to {}".format(latency, ip))
-        output_latency("{:.2f}".format(latency))
+        save_to_csv(state_is_up=True, latency="{:.2f}".format(latency))
 
 
 def log_bandwidth(url):
     try:
         download = speedtest.Speedtest().download()
         upload = speedtest.Speedtest().upload()
-    except RuntimeError:
-        logging.info("BANDWIDTH  : <error>")
+    except speedtest.SpeedtestHTTPError:
+        logging.info("BANDWIDTH  : no connection")
     else:
         logging.info("BANDWIDTH  : {:.3f} mbits down {:.3f} mbits up".format(download / 1000000, upload / 1000000))
-        output_download_bandwidth("{:.3f}".format(download / 1000000))
-        output_upload_bandwidth("{:.3f}".format(upload / 1000000))
+        save_to_csv(down_bandwidth="{:.3f}".format(download / 1000000),
+                    up_bandwidth="{:.3f}".format(upload / 1000000))
 
 
 def run_events(event_list):

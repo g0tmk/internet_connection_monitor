@@ -2,13 +2,11 @@
 import subprocess
 import platform
 
+from my_exceptions import NoConnectionException
+
 # The ping timeout. This is also the max measurable ping time output by this module.
 # If the connection is down, ping() will take at least this long to report this fact.
 _MAX_PING_TIME_SECONDS = 2
-
-
-class NoConnectionException(Exception):
-    pass
 
 
 def ping(ip, count=1, timeout=_MAX_PING_TIME_SECONDS):

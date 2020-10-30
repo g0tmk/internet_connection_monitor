@@ -2,7 +2,7 @@
 import re
 from multiprocessing import Pool
 
-from system_ping import ping, NoConnectionException
+from system_ping import ping
 
 # a number too high may affect ping times
 _MAX_THREADS = 5
