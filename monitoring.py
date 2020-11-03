@@ -3,13 +3,15 @@ import time
 import datetime
 import sys
 import math
-from latency import measure_latency_with_count
+
+from ping_wrapper import ping
 from my_exceptions import NoConnectionException
+
 import speedtest
 
 _BANDWIDTH_URL = "http://ipv4.download.thinkbroadband.com/2MB.zip"
 _LATENCY_IP = "8.8.8.8"
-_LATENCY_SAMPLE_COUNT = 2
+_PING_SAMPLE_COUNT = 2
 _OUTPUT_CSV = "./output.csv"
 
 
@@ -69,7 +71,7 @@ class PeriodicEvent():
 
 def log_latency(ip):
     try:
-        latency = measure_latency_with_count((ip, _LATENCY_SAMPLE_COUNT))
+        latency = ping(ip, _PING_SAMPLE_COUNT)
     except NoConnectionException:
         logging.info("LATENCY    : no connection")
         save_to_csv(state_is_up=False)
