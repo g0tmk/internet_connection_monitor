@@ -84,10 +84,12 @@ def log_bandwidth(url):
         upload = speedtest.Speedtest().upload()
     except speedtest.SpeedtestHTTPError:
         logging.info("BANDWIDTH  : no connection")
+        save_to_csv(state_is_up=False)
     else:
         logging.info("BANDWIDTH  : {:.3f} mbits down {:.3f} mbits up".format(download / 1000000, upload / 1000000))
         save_to_csv(down_bandwidth="{:.3f}".format(download / 1000000),
-                    up_bandwidth="{:.3f}".format(upload / 1000000))
+                    up_bandwidth="{:.3f}".format(upload / 1000000),
+                    state_is_up=True)
 
 
 def run_events(event_list):
