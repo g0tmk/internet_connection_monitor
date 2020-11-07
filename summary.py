@@ -129,11 +129,15 @@ def main():
                 dropout_durations.append(dropout_duration)
     dropout_durations.sort()
     durations_5_perc = int(len(dropout_durations) * 10.0 / 100.0)
-    logging.info(f"in the last {total_duration}, {dropouts} dropouts")
-    logging.info(f"max:       {max(dropout_durations)}")
-    logging.info(f"worst 10%: {average_timedelta(dropout_durations[-durations_5_perc:])}")
-    logging.info(f"best 10%:  {average_timedelta(dropout_durations[:durations_5_perc])}")
-    logging.info(f"min:       {min(dropout_durations)}")
+    try:
+        logging.info(f"in the last {total_duration}, {dropouts} dropouts")
+        logging.info(f"max:       {max(dropout_durations)}")
+        logging.info(f"worst 10%: {average_timedelta(dropout_durations[-durations_5_perc:])}")
+        logging.info(f"best 10%:  {average_timedelta(dropout_durations[:durations_5_perc])}")
+        logging.info(f"min:       {min(dropout_durations)}")
+    except ValueError:
+        # no dropouts
+        pass
 
     # plot
 
@@ -174,7 +178,7 @@ def main():
     ax.xaxis.set_major_formatter(formatter)
     ax.xaxis.set_tick_params(rotation=30, labelsize=10)
 
-    plt.savefig('up_states.png')
+    plt.savefig('graph.png')
     #plt.show()
 
 
