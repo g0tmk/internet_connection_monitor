@@ -8,9 +8,6 @@ import matplotlib.pyplot as plt
 from matplotlib.dates import (YEARLY, DateFormatter,
                               rrulewrapper, RRuleLocator, drange)
 
-# csv to read for internet status
-_INPUT_CSV_FILENAME = 'output.csv'
-
 # number of bytes to read at the end of the csv. if None, read all
 _CSV_READ_SIZE = 1024 * 8 * 8 * 8 * 3
 _CSV_READ_SIZE = None
@@ -83,6 +80,7 @@ def remove_duplicate_data_points(date_value_tuple):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Save network CSV data to png graph.')
+    parser.add_argument('csv_input_filename', help='location of csv to read for internet status')
     parser.add_argument('graph_filename', help='location to save graph')
     parser.add_argument('--start_n_hours_ago', type=int, help='start the graph using data captured N hours ago')
     parser.add_argument('-q', '--quiet', action='store_true', help='hide status/progress messages')
@@ -106,8 +104,8 @@ def main():
     up_speeds = []
     connected_states = []
 
-    logging.info('load {}'.format(_INPUT_CSV_FILENAME))
-    with open(_INPUT_CSV_FILENAME, 'r') as handle:
+    logging.debug('load {}'.format(args.csv_input_filename))
+    with open(args.csv_input_filename, 'r') as handle:
         filesize = handle.seek(0, 2)  # seek to end
         if _CSV_READ_SIZE is None:
             handle.seek(0, 0)  # seek to beginning
