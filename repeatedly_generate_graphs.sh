@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 make_all_graphs () {
-	python3 summary.py --quiet --start_n_hours_ago 6 graph_6h.png
-	python3 summary.py --quiet --start_n_hours_ago 24 graph_24h.png
-	python3 summary.py --quiet graph_all.png
+	nice python3 summary.py output.csv graph_6h.png  --quiet --start_n_hours_ago 6
+	nice python3 summary.py output.csv graph_24h.png --quiet --start_n_hours_ago 24
+	nice python3 summary.py output.csv graph_all.png --quiet
 }
 
 while true
