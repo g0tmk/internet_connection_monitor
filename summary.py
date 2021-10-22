@@ -20,10 +20,16 @@ _PLOT_DPI = 96
 
 
 def average_timedelta(input_list):
+    if len(input_list) == 0:
+        return 0
     return (sum(input_list, datetime.timedelta(0))) / len(input_list)
 
+
 def average(input_list):
+    if len(input_list) == 0:
+        return 0
     return (1.0 * sum(input_list)) / len(input_list)
+
 
 def convert_to_moving_average(date_value_tuple, window_size=5):
     results = []
@@ -34,6 +40,7 @@ def convert_to_moving_average(date_value_tuple, window_size=5):
         results.append((date, average(recent_values)))
     return results
 
+
 def convert_to_max_of_last_n(date_value_tuple, window_size=5):
     results = []
     recent_values = []
@@ -42,6 +49,7 @@ def convert_to_max_of_last_n(date_value_tuple, window_size=5):
         recent_values = recent_values[-window_size:]
         results.append((date, max(recent_values)))
     return results
+
 
 def datetime_from_date_and_time_string(date_str, time_str):
     year, month, day = date_str.split('-')
