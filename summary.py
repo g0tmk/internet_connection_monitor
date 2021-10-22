@@ -56,7 +56,10 @@ def convert_to_max_of_last_n(date_value_tuple, window_size=5):
 
 def datetime_from_date_and_time_string(date_str, time_str):
     year, month, day = date_str.split('-')
-    hour, minute, second = time_str.split(':')
+    try:
+        hour, minute, second = time_str.split(':')
+    except ValueError:
+        raise ValueError(('failed to parse time_str {}').format(time_str))
     return datetime.datetime(year=int(year),
                              month=int(month),
                              day=int(day),
@@ -101,9 +104,10 @@ def print_dropout_stats(connected_states):
             else:
                 dropout_durations.append(dropout_duration)
     dropout_durations.sort()
-    durations_5_perc = int(len(dropout_durations) * 10.0 / 100.0)
+    durations_5_perc = max(1, int(len(dropout_durations) * 10.0 / 100.0))
+
+    logging.info(f"in the last {total_duration}, {dropouts} dropouts")
     try:
-        logging.info(f"in the last {total_duration}, {dropouts} dropouts")
         logging.info(f"max:       {max(dropout_durations)}")
         logging.info(f"worst 10%: {average_timedelta(dropout_durations[-durations_5_perc:])}")
         logging.info(f"average:   {average_timedelta(dropout_durations)}")
@@ -113,17 +117,17 @@ def print_dropout_stats(connected_states):
         pass
 
 
-def save_data_over_time_graph(connected_states, latencies, down_speeds, up_speeds):
+def save_data_over_time_graph(filename, connected_states, latencies, down_speeds, up_speeds):
     fix, ax = plt.subplots()
     plt.figure(figsize=(_PLOT_WIDTH/_PLOT_DPI, _PLOT_HEIGHT/_PLOT_DPI), dpi=_PLOT_DPI)
 
-    logging.info('plot connected_states...')
+    logging.debug('plot connected_states...')
     connected_states = remove_duplicate_data_points(connected_states)
     plt.plot_date(list(x[0] for x in connected_states),
                   list(x[1] for x in connected_states),
                   linestyle='-',
                   marker=None)
-    logging.info('plot latencies...')
+    logging.debug('plot latencies...')
     #latencies = remove_duplicate_data_points(latencies)
     #latencies = convert_to_moving_average(latencies, window_size=30)
     latencies = convert_to_max_of_last_n(latencies, window_size=60)
@@ -131,14 +135,14 @@ def save_data_over_time_graph(connected_states, latencies, down_speeds, up_speed
                   list(x[1] for x in latencies),
                   linestyle='-',
                   marker=None)
-    logging.info('plot down_speeds...')
+    logging.debug('plot down_speeds...')
     #down_speeds = remove_duplicate_data_points(down_speeds)
     #down_speeds = convert_to_moving_average(down_speeds, window_size=3)
     plt.plot_date(list(x[0] for x in down_speeds),
                   list(x[1] for x in down_speeds),
                   linestyle='-',
                   marker=None)
-    logging.info('plot up_speeds...')
+    logging.debug('plot up_speeds...')
     #up_speeds = remove_duplicate_data_points(up_speeds)
     #up_speeds = convert_to_moving_average(up_speeds, window_size=3)
     plt.plot_date(list(x[0] for x in up_speeds),
@@ -151,7 +155,9 @@ def save_data_over_time_graph(connected_states, latencies, down_speeds, up_speed
     ax.xaxis.set_major_formatter(formatter)
     ax.xaxis.set_tick_params(rotation=30, labelsize=10)
 
-    plt.savefig('graph.png')
+    plt.savefig(filename)
+    logging.debug('saved graph to {}'.format(filename))
+    
     #plt.show()
 
 
@@ -249,28 +255,51 @@ def save_weekly_binned_data_scatter(connected_states):
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='Save network CSV data to png graph.')
+    parser.add_argument('--csv_input_filename', default='output.csv', help='location of csv to read for internet status')
+    parser.add_argument('--graph_filename', default='graph.png', help='location to save graph')
+    parser.add_argument('--start_n_hours_ago', type=int, help='start the graph using data captured N hours ago')
+    parser.add_argument('-q', '--quiet', action='store_true', help='hide status/progress messages')
+    parser.add_argument('-v', '--verbose', action='store_true', help='show extra debug messages')
+    args = parser.parse_args()
+    
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+    elif args.quiet:
+        logging.basicConfig(level=logging.WARNING)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
+    if args.start_n_hours_ago:
+        start_date = datetime.datetime.now() - datetime.timedelta(hours=args.start_n_hours_ago)
+    else:
+        start_date = None
 
     latencies = []
     down_speeds = []
     up_speeds = []
     connected_states = []
 
-    logging.basicConfig(level=logging.INFO)
-
-    logging.info('load...')
-    with open('output.csv', 'r') as handle:
+    logging.debug('load {}'.format(args.csv_input_filename))
+    with open(args.csv_input_filename, 'r') as handle:
         filesize = handle.seek(0, 2)  # seek to end
         if _CSV_READ_SIZE is None:
             handle.seek(0, 0)  # seek to beginning
         else:
             handle.seek(filesize - _CSV_READ_SIZE, 0)  # seek to CSV_READ_SIZE bytes from the end
-        handle.readline()  # throw out the first line: it is probably a partial line
+            handle.readline()  # throw out the first line: it is probably a partial line
 
         plots = csv.reader(handle, delimiter=',')
         for row in plots:
             # col 0: date (2020-11-04)
             # col 1: time (17:36:16)
-            date = datetime_from_date_and_time_string(row[0], row[1])
+            try:
+                date = datetime_from_date_and_time_string(row[0], row[1])
+            except ValueError:
+                raise ValueError('fail to parse row[0]={}, row[1]={}'.format(row[0], row[1]))
+            if start_date is not None and date < start_date:
+                continue
             # col 2: latency (16.25)
             if row[2] != '':
                 latencies.append((date, float(row[2])))
@@ -284,7 +313,7 @@ def main():
             if row[5] != '':
                 connected_states.append((date, 1 if row[5] == "True" else 0))
 
-    # preprocess the data
+    # summarize dropout stats
 
     connected_states = remove_duplicate_data_points(connected_states)
 
@@ -292,14 +321,10 @@ def main():
     print_dropout_stats(connected_states)
 
     # plot data over time
-    save_data_over_time_graph(connected_states, latencies, down_speeds, up_speeds)
+    save_data_over_time_graph(args.graph_filename, connected_states, latencies, down_speeds, up_speeds)
 
     # plot scatter
     #save_weekly_binned_data_scatter(connected_states)
-    return
-
-
-
 
 
 if __name__ == "__main__":
