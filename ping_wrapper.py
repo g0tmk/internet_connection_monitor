@@ -58,8 +58,8 @@ def ping_and_return_latency_list(ip, sample_count=2):
             value = 0.5 if match.group(1) == "<1" else match.group(1)
             values.append(value)
 
-    if len(values) != sample_count:
-        raise RuntimeError(
+    if len(values) < sample_count:
+        raise NoConnectionException(
             "Wrong number of matches ({}) from ping (output={})".format(len(values),
                                                                         repr(lines)))
 
